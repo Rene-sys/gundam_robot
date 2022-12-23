@@ -1,96 +1,97 @@
-gundam_robot [![Build Status](https://travis-ci.com/gundam-global-challenge/gundam_robot.svg?branch=master)](https://travis-ci.com/gundam-global-challenge/gundam_robot)
-========================================================================================================================================================================
-ROS packages for GUNDAM robots
+## darwin_gazebo
 
-![GUNDAM Gazebo Simulation](img/gundam_rx78_world.png)
+ROS package providing Gazebo simulation of the Darwin OP robot.
+Also provides a Python interface to the joints and some walk capabilities.
 
-How to visualize URDF model
-===========================
+These have been tested in simulation and need some work to be used on the real robot, do not use as-is.
 
-To visualize URDF file in your rviz, you can use `display.launch` file.
+![Darwin model in Gazebo](/darwin.png?raw=true "Darwin model in Gazebo")
+
+## Tutorial
+
+A tutorial describing how to use this package can be found at:
+
+http://www.generationrobots.com/en/content/83-carry-out-simulations-and-make-your-darwin-op-walk-with-gazebo-and-ros
+
+## Install
+
+Clone in your catkin workspace and catkin_make it.
+Make sure you also have the following packages in your workspace
+* darwin_description: https://github.com/HumaRobotics/darwin_description
+* darwin_control: https://github.com/HumaRobotics/darwin_control
+    
+## Usage
+
+You can launch the simulation with:
+
+    roslaunch darwin_gazebo darwin_gazebo.launch
+    
+PRESS PLAY IN GAZEBO ONLY WHEN EVERYTHING IS LOADED (wait for controllers)
+
+You can run a walk demo with:
+
+    rosrun darwin_gazebo walker_demo.py
+
+## ROS API
+
+All topics are provided in the /darwin namespace.
+
+Sensors:
+
+    /darwin/camera/image_raw
+    /darwin/imu
+    /darwin/joint_states
+
+Actuators (radians for position control, arbitrary normalized speed for cmd_vel):
+
+    /darwin/cmd_vel
+    /darwin/j_ankle1_l_position_controller/command
+    /darwin/j_ankle1_r_position_controller/command
+    /darwin/j_ankle2_l_position_controller/command
+    /darwin/j_ankle2_r_position_controller/command
+    /darwin/j_gripper_l_position_controller/command
+    /darwin/j_gripper_r_position_controller/command
+    /darwin/j_high_arm_l_position_controller/command
+    /darwin/j_high_arm_r_position_controller/command
+    /darwin/j_low_arm_l_position_controller/command
+    /darwin/j_low_arm_r_position_controller/command
+    /darwin/j_pan_position_controller/command
+    /darwin/j_pelvis_l_position_controller/command
+    /darwin/j_pelvis_r_position_controller/command
+    /darwin/j_shoulder_l_position_controller/command
+    /darwin/j_shoulder_r_position_controller/command
+    /darwin/j_thigh1_l_position_controller/command
+    /darwin/j_thigh1_r_position_controller/command
+    /darwin/j_thigh2_l_position_controller/command
+    /darwin/j_thigh2_r_position_controller/command
+    /darwin/j_tibia_l_position_controller/command
+    /darwin/j_tibia_r_position_controller/command
+    /darwin/j_tilt_position_controller/command
+    /darwin/j_wrist_l_position_controller/command
+    /darwin/j_wrist_r_position_controller/command
+
+## Python API
+
+Basic usage:
+```python
+import rospy
+from darwin_gazebo.darwin import Darwin
+
+rospy.init_node("walker_demo")
+
+darwin=Darwin()
+rospy.sleep(1)
+
+darwin.set_walk_velocity(1,0,0) # Set full speed ahead for 5 secs
+rospy.sleep(5)
+darwin.set_walk_velocity(0,0,0) # Stop
 ```
-$ roslaunch gundam_rx78_description display.launch
-```
+## Dependencies
 
-How to run gazebo simulation
-============================
+The following ROS packages have to be installed:
+* gazebo_ros_control
+* hector_gazebo
 
-To run a gazebo dynamics simulation, you can start `gundam_rx78_world.launch`.
+## License
 
-```
-$ roslaunch gundam_rx78_gazebo gundam_rx78_world.launch
-```
-
-To control joint angles, try a sample script.
-
-```
-# move upper body
-$ rosrun gundam_rx78_control joint_trajectory_client_example.py
-```
-
-Experimental
-------------
-
-You can run "Robot"-like walking pattern on simulation
-
-```
-$ roslaunch gundam_rx78_gazebo gundam_rx78_walk.launch
-```
-
-```
-# step
-$ rosrun gundam_rx78_control joint_trajectory_client_csv.py `rospack find gundam_rx78_control`/sample/csv/step.csv
-# walk forward
-$ rosrun gundam_rx78_control joint_trajectory_client_csv.py `rospack find gundam_rx78_control`/sample/csv/walk-forward.csv
-# walk backward
-$ rosrun gundam_rx78_control joint_trajectory_client_csv.py `rospack find gundam_rx78_control`/sample/csv/walk-backward.csv
-# walk to right
-$ rosrun gundam_rx78_control joint_trajectory_client_csv.py `rospack find gundam_rx78_control`/sample/csv/walk-to-right.csv
-# walk to left
-$ rosrun gundam_rx78_control joint_trajectory_client_csv.py `rospack find gundam_rx78_control`/sample/csv/walk-to-left.csv
-# turn right
-$ rosrun gundam_rx78_control joint_trajectory_client_csv.py `rospack find gundam_rx78_control`/sample/csv/turn-right.csv
-# turn left
-$ rosrun gundam_rx78_control joint_trajectory_client_csv.py `rospack find gundam_rx78_control`/sample/csv/turn-left.csv
-```
-
-Note that currently, we have several limitation on this simulation, we only have position controller etc.
-
-You can also find sample motion control files in the `gundam_rx78_control/sample` directory.
-
-For Developers Only
-===================
-
-How to setup workspace
-----------------------
-
-We recommend you to use `wstool` to setup you workspace.
-
-```
-$ mkdir -p catkin_ws/src
-$ cd  catkin_ws
-$ wstool init src
-$ wstool merge -t src https://raw.githubusercontent.com/gundam-global-challenge/gundam_robot/.gundam.rosinstall
-$ wstool update -t src
-$ source /opt/ros/$ROS_DISTRO/setup.bash
-$ rosdep install -y -r --from-paths src --ignore-src
-$ catkin build
-$ source devel/setup.bash
-```
-
-How to install mesh and urdf file
----------------------------------
-
-The Gundam URDF file is automatically generated from Collada DAE file.
-
-First, download the Gundam Collada file (ex. `GGC_TestModel_rx78_20170112.DAE`) under `gundam_rx78_description` directory.
-Then, run `./scripts/dae_to_urdf.py` file with the downloaded file name as an argument. This will create mesh files under `meshes/` directory and create the URDF file under `urdf/` directory.
-
-Finally, rename the file name to `urdf/gundam_rx78.urdf`
-
-```
-$ roscd gundam_rx78_description
-$ python ./scripts/ggc_dae_to_urdf.py GGC_TestModel_rx78_20170112.DAE --write_mesh
-$ mv urdf/GGC_TestModel_rx78_20170112.urdf urdf/gundam_rx78.urdf
-```
-You have to use urdf_parser_py version 0.4.0 instead of version 0.4.1.
+This software is provided by Génération Robots http://www.generationrobots.com and HumaRobotics http://www.humarobotics.com under the Simplified BSD license
